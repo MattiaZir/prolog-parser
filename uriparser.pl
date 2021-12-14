@@ -5,7 +5,7 @@ uri(Scheme, Userinfo, Host, Port, Path, Query, Fragment) -->
 
 scheme(Scheme) --> identifier(Scheme), [:].
 
-after_scheme(Userinfo, Host, Port, Path, Query, Fragment) --> 
+after_scheme(Userinfo, Host, Port, Path, Query, Fragment) -->
         authority(Userinfo, Host, Port), 
         after_authority(Path, Query, Fragment).
 after_scheme([], [], [], [], [], []) --> [].
@@ -13,7 +13,6 @@ after_scheme([], [], [], [], [], []) --> [].
 % AUTHORITY %
 authority(Userinfo, Host, Port) --> double_slash, userinfo(Userinfo),
         host(Host), port(Port).
-authority([]) --> [].
 
 host(Host) --> host_identifier(HA), [.], host(HB), !, 
         { append([HA, ['.'], HB], Host) }.
@@ -25,8 +24,10 @@ userinfo([]) --> [].
 
 % PATH %
 
-after_authority(Path, Query, Fragment) --> [/], path(Path), query(Query), fragment(Fragment).
+after_authority(Path, Query, Fragment) --> [/], path(Path), 
+        query(Query), fragment(Fragment).
 after_authority([], [], []) --> [].
+
 path(Path) --> identifier(PA), [/], path(PB), !,
         { append([PA, ['/'], PB], Path)}.
 path(Path) --> identifier(Path).
@@ -76,7 +77,8 @@ port(['8', '0']) --> [], !.
 
 port_valid(Port) --> [P_head], { char_type(P_head, digit) },
         port_valid(P_rest), !, { Port = [P_head | P_rest] }.
-port_valid(Port) --> [P_head], { char_type(P_head, digit), Port = [P_head] }, !.
+port_valid(Port) --> [P_head], { char_type(P_head, digit), 
+        Port = [P_head] }, !.
 
 % VARIE %
 double_slash --> [/], [/].
