@@ -3,6 +3,7 @@ uri(Scheme, Userinfo, Host, Port, Path, Query, Fragment) -->
         scheme(Scheme),
         after_scheme(Userinfo, Host, Port, Path, Query, Fragment).
 
+% SCHEME %
 scheme(Scheme) --> identifier(Scheme), [:].
 
 after_scheme(Userinfo, Host, Port, Path, Query, Fragment) -->
@@ -19,9 +20,9 @@ after_authority(Path, Query, Fragment) --> [/], path(Path),
 after_authority([], [], []) --> [].
 
 % HOST %
-host(Host) --> host_identifier(HA), [.], host(HB), !, 
+host(Host) --> host_identifier(HA), [.], host(HB),
         { append([HA, ['.'], HB], Host) }.
-host(Host) --> host_identifier(Host), !.
+host(Host) --> host_identifier(Host).
 host(Host) --> ip(Host).
 
 % USER INFO %
@@ -29,7 +30,7 @@ userinfo(Userinfo) --> identifier(Userinfo), [@].
 userinfo([]) --> [].
 
 % PATH %
-path(Path) --> identifier(PA), [/], path(PB), !,
+path(Path) --> identifier(PA), [/], path(PB),
         { append([PA, ['/'], PB], Path)}.
 path(Path) --> identifier(Path).
 path([]) --> [].
@@ -52,12 +53,12 @@ valid_fragment(Fragment) --> [F_head], { Fragment = [F_head] }.
 
 % IDENTIFIERS %
 identifier(I) --> [I_head], { valid_id_char(I_head) }, 
-                identifier(I_rest), !, { I = [I_head | I_rest] }.
+                identifier(I_rest), { I = [I_head | I_rest] }.
 identifier(I) --> [I_head], { valid_id_char(I_head), I = [I_head] }.
 
 % HOST IDENTIFIER %
 host_identifier(H) --> [H_head], { valid_host_char(H_head) }, 
-        host_identifier(H_rest), !, { H = [H_head | H_rest] }.
+        host_identifier(H_rest), { H = [H_head | H_rest] }.
 host_identifier(H) --> [H_head], { valid_host_char(H_head), H = [H_head] }.
 
 % IP %
@@ -72,13 +73,13 @@ ip_number(Dig) --> [D1, D2, D3],
         { valid_ip_number(D1, D2, D3), Dig = [D1, D2, D3] }.
 
 % PORT %
-port(Port) --> [:], !, port_valid(Port).
-port(['8', '0']) --> [], !.
+port(Port) --> [:], port_valid(Port).
+port(['8', '0']) --> [].
 
 port_valid(Port) --> [P_head], { char_type(P_head, digit) },
-        port_valid(P_rest), !, { Port = [P_head | P_rest] }.
+        port_valid(P_rest), { Port = [P_head | P_rest] }.
 port_valid(Port) --> [P_head], { char_type(P_head, digit), 
-        Port = [P_head] }, !.
+        Port = [P_head] }.
 
 % VARIE %
 double_slash --> [/], [/].
