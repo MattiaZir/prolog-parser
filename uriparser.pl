@@ -2,24 +2,51 @@
 
 % URI %
 uri(Scheme, Userinfo, Host, Port, Path, Query, Fragment) -->
-        scheme(Scheme), authority(Userinfo, Host, Port), 
-        after_authority(Path, Query, Fragment).
+        scheme(Scheme), 
+        after_scheme(Scheme, Userinfo, Host, Port, Path, Query, Fragment).
 
 uri(Scheme, [], [], Port, Path, Query, Fragment) -->
         scheme(Scheme), [/], path(Path),
         query(Query), fragment(Fragment), port(Port).
 
 % SCHEME %
-scheme(Scheme) --> identifier(Scheme), [:].
+scheme(Scheme) --> identifier(Scheme_ch),
+        { atom_chars(Scheme, Scheme_ch) }, [:].
+
+after_scheme(mailto, Userinfo, [], Port, [], [], []) -->
+        userinfo(Userinfo), port(Port).
+after_scheme(mailto, Userinfo, Host, Port, [], [], []) -->
+        userinfo(Userinfo), [@], host(Host), port(Port).
+
+after_scheme(news, [], Host, Port, [], [], []) -->
+        host(Host), port(Port).
+
+after_scheme(tel, Userinfo, [], Port, [], [], []) -->
+        userinfo(Userinfo), port(Port).
+after_scheme(fax, Userinfo, [], Port, [], [], []) -->
+        userinfo(Userinfo), port(Port).
+
+after_scheme(zos, Userinfo, Host, Port, Path, Query, Fragment) --> 
+        authority(Userinfo, Host, Port),
+        after_authority_zos(Path, Query, Fragment), !.
+
+after_scheme(_, Userinfo, Host, Port, Path, Query, Fragment) -->
+        authority(Userinfo, Host, Port), 
+        after_authority(Path, Query, Fragment).
 
 % AUTHORITY %
-authority(Userinfo, Host, Port) --> double_slash, userinfo(Userinfo),
+authority(Userinfo, Host, Port) --> double_slash, userinfo(Userinfo), [@],
         host(Host), port(Port).
+authority([], Host, Port) --> double_slash, host(Host), port(Port).
 authority([], [], Port) --> [], port(Port).
 
 after_authority(Path, Query, Fragment) --> [/], path(Path), 
         query(Query), fragment(Fragment).
 after_authority([], [], []) --> [].
+
+after_authority_zos(Path, Query, Fragment) --> [/], path_zos(Path), 
+        query(Query), fragment(Fragment).
+after_authority_zos([], [], []) --> [].
 
 % HOST %
 host(Host) --> host_identifier(HA), [.], host(HB),
@@ -28,14 +55,22 @@ host(Host) --> host_identifier(Host).
 host(Host) --> ip(Host).
 
 % USER INFO %
-userinfo(Userinfo) --> identifier(Userinfo), [@].
-userinfo([]) --> [].
+userinfo(Userinfo) --> identifier(Userinfo).
 
 % PATH %
 path(Path) --> identifier(PA), [/], path(PB),
         { append([PA, ['/'], PB], Path)}.
 path(Path) --> identifier(Path).
 path([]) --> [].
+
+path_zos(Path) --> id44(PZA), ['('], id8(PZB), [')'],
+        { append([ [PZA, ['('], PZB, [')'] ]], Path) }.
+path_zos(Path) --> id44(Path).
+path_zos([]) --> [].
+
+id44(I) --> [I_head], { char_type(I_head, alnum) },
+        id44(I_rest), { I = [I_head | I_rest] }.
+id44(I) --> [I_head], { I_head \= '.', I = [I_head] }.
 
 % QUERY %
 query(Query) --> [?], valid_query(Query).
@@ -104,6 +139,9 @@ valid_ip_number(D1, D2, D3) :-
         number_string(Number, [D1, D2, D3]),
         Number >= 0,
         Number =< 255.
+
+
+
 
 uri_parse(URIString, uri(Sch, UI, Ho, Po, Pa, Qu, Fr)) :-
         phrase(uri(Sch, UI, Ho, Po, Pa, Qu, Fr), URIString).
