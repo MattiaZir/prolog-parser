@@ -1,17 +1,14 @@
 % URI %
 uri(Scheme, Userinfo, Host, Port, Path, Query, Fragment) -->
         scheme(Scheme),
-        authority(Userinfo, Host, Port),
-        after_authority(Path, Query, Fragment).
-
-
-% URI 3 %
-/*
-uri --> scheme, [:], scheme_syntax.
-*/
-
+        after_scheme(Userinfo, Host, Port, Path, Query, Fragment).
 
 scheme(Scheme) --> identifier(Scheme), [:].
+
+after_scheme(Userinfo, Host, Port, Path, Query, Fragment) --> 
+        authority(Userinfo, Host, Port), 
+        after_authority(Path, Query, Fragment).
+after_scheme([], [], [], [], [], []) --> [].
 
 % AUTHORITY %
 authority(Userinfo, Host, Port) --> double_slash, userinfo(Userinfo),
