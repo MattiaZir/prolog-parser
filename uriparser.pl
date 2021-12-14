@@ -1,19 +1,21 @@
+:- set_prolog_flag(double_quotes, chars).
+
 % URI %
 uri(Scheme, Userinfo, Host, Port, Path, Query, Fragment) -->
-        scheme(Scheme),
-        after_scheme(Userinfo, Host, Port, Path, Query, Fragment).
+        scheme(Scheme), authority(Userinfo, Host, Port), 
+        after_authority(Path, Query, Fragment).
+
+uri(Scheme, [], [], Port, Path, Query, Fragment) -->
+        scheme(Scheme), [/], path(Path),
+        query(Query), fragment(Fragment), port(Port).
 
 % SCHEME %
 scheme(Scheme) --> identifier(Scheme), [:].
 
-after_scheme(Userinfo, Host, Port, Path, Query, Fragment) -->
-        authority(Userinfo, Host, Port), 
-        after_authority(Path, Query, Fragment).
-after_scheme([], [], [], [], [], []) --> [].
-
 % AUTHORITY %
 authority(Userinfo, Host, Port) --> double_slash, userinfo(Userinfo),
         host(Host), port(Port).
+authority([], [], Port) --> [], port(Port).
 
 after_authority(Path, Query, Fragment) --> [/], path(Path), 
         query(Query), fragment(Fragment).
@@ -67,7 +69,6 @@ ip(Ip) --> ip_number(D1),
         [.], ip_number(D3),
         [.], ip_number(D4),
         { append([D1, [.], D2, [.], D3, [.], D4], Ip) }.
-ip([]) --> [].
 
 ip_number(Dig) --> [D1, D2, D3], 
         { valid_ip_number(D1, D2, D3), Dig = [D1, D2, D3] }.
@@ -85,10 +86,6 @@ port_valid(Port) --> [P_head], { char_type(P_head, digit),
 double_slash --> [/], [/].
 
 % VARIE %
-uri_parse(URIString, uri(Sch, UI, Ho, Po, Pa, Qu, Fr)) :-
-        string_chars(URIString, List),
-        phrase(uri(Sch, UI, Ho, Po, Pa, Qu, Fr), List).
-
 valid_id_char(Char) :-
         Char \= '/',
         Char \= '?',
@@ -107,6 +104,9 @@ valid_ip_number(D1, D2, D3) :-
         number_string(Number, [D1, D2, D3]),
         Number >= 0,
         Number =< 255.
+
+uri_parse(URIString, uri(Sch, UI, Ho, Po, Pa, Qu, Fr)) :-
+        phrase(uri(Sch, UI, Ho, Po, Pa, Qu, Fr), URIString).
 
 % TEST %
 test_uri_1_success :-
