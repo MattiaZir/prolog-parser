@@ -14,20 +14,21 @@ after_scheme([], [], [], [], [], []) --> [].
 authority(Userinfo, Host, Port) --> double_slash, userinfo(Userinfo),
         host(Host), port(Port).
 
+after_authority(Path, Query, Fragment) --> [/], path(Path), 
+        query(Query), fragment(Fragment).
+after_authority([], [], []) --> [].
+
+% HOST %
 host(Host) --> host_identifier(HA), [.], host(HB), !, 
         { append([HA, ['.'], HB], Host) }.
 host(Host) --> host_identifier(Host), !.
 host(Host) --> ip(Host).
 
+% USER INFO %
 userinfo(Userinfo) --> identifier(Userinfo), [@].
 userinfo([]) --> [].
 
 % PATH %
-
-after_authority(Path, Query, Fragment) --> [/], path(Path), 
-        query(Query), fragment(Fragment).
-after_authority([], [], []) --> [].
-
 path(Path) --> identifier(PA), [/], path(PB), !,
         { append([PA, ['/'], PB], Path)}.
 path(Path) --> identifier(Path).
@@ -40,7 +41,6 @@ query([]) --> [].
 valid_query(Query) --> [Q_head], { Q_head \= '#' }, 
         valid_query(Q_rest), { Query = [Q_head | Q_rest] }.
 valid_query(Query) --> [Q_head], { Q_head \= '#', Query = [Q_head] }.
-
 
 % FRAGMENT %
 fragment(Fragment) --> [#], valid_fragment(Fragment).
