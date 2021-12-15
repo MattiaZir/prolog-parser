@@ -13,6 +13,7 @@ uri(Scheme, [], [], Port, Path, Query, Fragment) -->
 scheme(Scheme) --> identifier(Scheme_ch),
         { atom_chars(Scheme, Scheme_ch) }, [:].
 
+% AFTER SCHEME %
 after_scheme(mailto, Userinfo, [], Port, [], [], []) -->
         userinfo(Userinfo), port(Port).
 after_scheme(mailto, Userinfo, Host, Port, [], [], []) -->
@@ -63,14 +64,34 @@ path(Path) --> identifier(PA), [/], path(PB),
 path(Path) --> identifier(Path).
 path([]) --> [].
 
-path_zos(Path) --> id44(PZA), ['('], id8(PZB), [')'],
-        { append([ [PZA, ['('], PZB, [')'] ]], Path) }.
+path_zos(Path) --> id44(PZA), { length(PZA, L), L =< 44 },
+        ['('], id8(PZB), { length(PZB, L2), L2 =< 8}, [')'],
+        { append([PZA, ['('], PZB, [')']], Path) }.
 path_zos(Path) --> id44(Path).
 path_zos([]) --> [].
 
-id44(I) --> [I_head], { char_type(I_head, alnum) },
-        id44(I_rest), { I = [I_head | I_rest] }.
-id44(I) --> [I_head], { I_head \= '.', I = [I_head] }.
+% ID44 %
+id44(Id) --> valid_id44(IdA), [.], id44(IdB), {append([IdA, ['.'], IdB], Id)}.
+id44(Id) --> [Id1], { char_type(Id1, alpha) },
+        valid_id44(Id_rest), 
+        { Id = [Id1 | Id_rest] }.
+id44(Id) --> [Id1], { char_type(Id1, alpha), Id = [Id1] }.
+
+valid_id44(Id) --> [Id_head],
+        {char_type(Id_head, alnum) },
+        valid_id44(Id_rest), 
+        { Id = [Id_head | Id_rest] }.
+valid_id44(Id) --> [Id_head], { char_type(Id_head, alnum), Id = [Id_head] }.
+
+% ID8 %
+id8(Id) --> [Id1], { char_type(Id1, alnum) }, 
+        valid_id8(Id_rest), 
+        { Id = [Id1 | Id_rest] }.
+id8(Id) --> [Id1], { char_type(Id1, alpha), Id = [Id1] }.
+
+valid_id8(Id) --> [Id_head], valid_id44(Id_rest), 
+        { Id = [Id_head | Id_rest] }.
+valid_id8(Id) --> [Id_head], { Id = [Id_head] }.
 
 % QUERY %
 query(Query) --> [?], valid_query(Query).
@@ -139,9 +160,6 @@ valid_ip_number(D1, D2, D3) :-
         number_string(Number, [D1, D2, D3]),
         Number >= 0,
         Number =< 255.
-
-
-
 
 uri_parse(URIString, uri(Sch, UI, Ho, Po, Pa, Qu, Fr)) :-
         phrase(uri(Sch, UI, Ho, Po, Pa, Qu, Fr), URIString).
