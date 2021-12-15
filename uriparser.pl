@@ -188,6 +188,6 @@ test_success :-
         uri_parse("http://www.google.com/we/dir?query#fragment", _),
         uri_parse("http://www.google.com/we/dir?query", _),
         uri_parse("http://www.google.com/we/dir", _),
+        uri_parse("http://www.google.com/we", _),
         uri_parse("http://www.google.com/", _),
-        uri_parse("http://www.google.com/we/", _),
         uri_parse("http:", _).
